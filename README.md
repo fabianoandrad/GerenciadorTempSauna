@@ -485,9 +485,9 @@ A interface foi projetada para priorizar:
 
 ---
 
-## 👨‍💻 Autor
+## 👨‍💻 Autor 
 
-Desenvolvido como projeto pessoal de estudo e desenvolvimento com **ESP32, C++, Web e IoT**.
+Desenvolvido por Fabiano Andrade como projeto pessoal para um amigo e desenvolvimento com **ESP32, C++, Web e IoT**.
 
 ---
 
