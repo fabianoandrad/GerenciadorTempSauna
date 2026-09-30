@@ -1,0 +1,503 @@
+
+/* =========================================
+   CONFIGURAÇÕES GERAIS
+========================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+
+    background: #0b0f14;
+    color: #ffffff;
+
+    font-family: Arial, Helvetica, sans-serif;
+
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
+.header {
+    width: 100%;
+
+    padding: 25px 40px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    border-bottom: 1px solid #252c35;
+
+    background: #0e1319;
+}
+
+
+/* Título */
+
+.header-title h1 {
+    font-size: clamp(24px, 3vw, 42px);
+
+    font-weight: 700;
+
+    letter-spacing: 2px;
+}
+
+.header-title span {
+    display: block;
+
+    margin-top: 5px;
+
+    color: #8d98a5;
+
+    font-size: clamp(13px, 1.3vw, 18px);
+
+    letter-spacing: 1px;
+}
+
+
+/* Relógio */
+
+.datetime {
+    text-align: right;
+}
+
+#clock {
+    font-size: clamp(32px, 4vw, 58px);
+
+    font-weight: 600;
+
+    letter-spacing: 2px;
+}
+
+#date {
+    margin-top: 4px;
+
+    color: #8d98a5;
+
+    font-size: clamp(14px, 1.5vw, 20px);
+}
+
+
+/* =========================================
+   DASHBOARD
+========================================= */
+
+.dashboard {
+    width: 100%;
+    max-width: 1500px;
+
+    margin: auto;
+
+    padding: 40px;
+
+    display: grid;
+
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 30px;
+}
+
+
+/* =========================================
+   CARDS DE TEMPERATURA
+========================================= */
+
+.temperature-card {
+    min-height: 330px;
+
+    padding: 35px;
+
+    background: #151b22;
+
+    border: 1px solid #27313c;
+
+    border-radius: 24px;
+
+    display: flex;
+    flex-direction: column;
+
+    justify-content: space-between;
+
+    box-shadow:
+        0 15px 40px rgba(0, 0, 0, 0.25);
+
+    transition: transform 0.2s ease,
+                border-color 0.2s ease;
+}
+
+.temperature-card:hover {
+    transform: translateY(-3px);
+
+    border-color: #3b4856;
+}
+
+
+/* Cabeçalho do card */
+
+.card-header {
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+}
+
+.card-header h2 {
+    font-size: clamp(24px, 2.5vw, 38px);
+
+    letter-spacing: 2px;
+}
+
+.icon {
+    font-size: clamp(30px, 3vw, 45px);
+}
+
+
+/* =========================================
+   TEMPERATURA ATUAL
+========================================= */
+
+.temperature {
+    display: flex;
+
+    align-items: baseline;
+
+    gap: 8px;
+}
+
+.temperature #tempSauna,
+.temperature #tempPiscina {
+    font-size: clamp(44px, 9vw, 80px);
+
+    font-weight: 700;
+
+    line-height: 1;
+}
+
+.unit {
+    font-size: clamp(30px, 4vw, 55px);
+
+    color: #8d98a5;
+}
+
+
+/* =========================================
+   TEMPERATURA MÁXIMA
+========================================= */
+
+.maximum {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    padding-top: 20px;
+
+    border-top: 1px solid #29323c;
+}
+
+.maximum span {
+    color: #8d98a5;
+
+    font-size: clamp(14px, 1.3vw, 19px);
+}
+
+.maximum strong {
+    font-size: clamp(20px, 2vw, 30px);
+}
+
+
+/* =========================================
+   CARD DE FOGO
+========================================= */
+
+.fire-card {
+    grid-column: 1 / -1;
+
+    min-height: 180px;
+
+    padding: 30px 40px;
+
+    background: #151b22;
+
+    border: 1px solid #27313c;
+
+    border-radius: 24px;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 30px;
+
+    transition:
+        background 0.3s ease,
+        border-color 0.3s ease;
+}
+
+
+.fire-icon {
+    width: 90px;
+    height: 90px;
+
+    border-radius: 50%;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background: #202831;
+
+    font-size: 45px;
+}
+
+
+.fire-info {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 8px;
+}
+
+.fire-label {
+    color: #8d98a5;
+
+    font-size: clamp(14px, 1.3vw, 19px);
+
+    letter-spacing: 2px;
+}
+
+#fireStatus {
+    font-size: clamp(28px, 3.5vw, 50px);
+
+    color: #4ade80;
+}
+
+
+/* =========================================
+   ESTADO: FOGO DETECTADO
+========================================= */
+
+.fire-card.fire-detected {
+    background: #2a1111;
+
+    border-color: #ef4444;
+
+    animation: fireAlert 1s infinite alternate;
+}
+
+.fire-card.fire-detected #fireStatus {
+    color: #ef4444;
+}
+
+.fire-card.fire-detected .fire-icon {
+    background: #451515;
+}
+
+
+@keyframes fireAlert {
+
+    from {
+        box-shadow: 0 0 5px rgba(239, 68, 68, 0.2);
+    }
+
+    to {
+        box-shadow: 0 0 30px rgba(239, 68, 68, 0.5);
+    }
+}
+
+
+/* =========================================
+   FOOTER
+========================================= */
+
+.footer {
+    width: 100%;
+
+    padding: 15px 40px;
+
+    display: flex;
+
+    justify-content: center;
+
+    border-top: 1px solid #252c35;
+
+    background: #0e1319;
+}
+
+.connection {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    color: #8d98a5;
+
+    font-size: 14px;
+
+    letter-spacing: 1px;
+}
+
+.connection-dot {
+    width: 10px;
+    height: 10px;
+
+    border-radius: 50%;
+
+    background: #4ade80;
+
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.7);
+}
+
+
+/* =========================================
+   TABLET
+========================================= */
+
+@media (max-width: 900px) {
+
+    .header {
+        padding: 20px 25px;
+    }
+
+    .dashboard {
+        padding: 25px;
+        gap: 20px;
+    }
+
+    .temperature-card {
+        min-height: 280px;
+        padding: 25px;
+    }
+
+}
+
+
+/* =========================================
+   CELULAR
+========================================= */
+
+@media (max-width: 650px) {
+
+    .header {
+        padding: 20px;
+
+        align-items: flex-start;
+    }
+
+    .header-title h1 {
+        font-size: 22px;
+    }
+
+    .header-title span {
+        font-size: 12px;
+    }
+
+    #clock {
+        font-size: 26px;
+    }
+
+    #date {
+        font-size: 12px;
+    }
+
+
+    .dashboard {
+
+        padding: 20px;
+
+        grid-template-columns: 1fr;
+
+        gap: 18px;
+    }
+
+
+    .temperature-card {
+
+        min-height: 260px;
+
+        padding: 25px;
+    }
+
+
+    .temperature-card .temperature span:first-child {
+        font-size: 80px;
+    }
+
+
+    .maximum {
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 5px;
+    }
+
+
+    .fire-card {
+
+        grid-column: auto;
+
+        min-height: 160px;
+
+        padding: 25px;
+
+        justify-content: flex-start;
+
+        gap: 20px;
+    }
+
+
+    .fire-icon {
+
+        width: 65px;
+        height: 65px;
+
+        font-size: 32px;
+
+        flex-shrink: 0;
+    }
+
+
+    .footer {
+        padding: 15px 20px;
+    }
+
+}
+
+
+/* =========================================
+   CELULARES MUITO PEQUENOS
+========================================= */
+
+@media (max-width: 400px) {
+
+    .header {
+        flex-direction: column;
+
+        gap: 15px;
+    }
+
+    .datetime {
+        text-align: left;
+    }
+
+    .temperature-card .temperature span:first-child {
+        font-size: 65px;
+    }
+
+}

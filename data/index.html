@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Sauna e Piscina</title>
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <header class="header">
+      <div class="header-title">
+        <h1>SAUNA E PISCINA</h1>
+        <span>Monitoramento de temperaturas</span>
+      </div>
+
+      <div class="datetime">
+        <div id="clock">00:00:00</div>
+        <div id="date">00/00/0000</div>
+      </div>
+    </header>
+
+    <main class="dashboard">
+      <!-- SAUNA -->
+      <section class="temperature-card sauna">
+        <div class="card-header">
+          <span class="icon">♨</span>
+          <h2>SAUNA</h2>
+        </div>
+
+        <div class="temperature">
+          <span id="tempSauna">--.-</span>
+          <span class="unit">°C</span>
+        </div>
+
+        <div class="maximum">
+          <span>Temperatura máxima registrada</span>
+          <strong id="maxTempSauna">--.- °C</strong>
+        </div>
+      </section>
+
+      <!-- PISCINA -->
+      <section class="temperature-card piscina">
+        <div class="card-header">
+          <span class="icon">💧</span>
+          <h2>PISCINA</h2>
+        </div>
+
+        <div class="temperature">
+          <span id="tempPiscina">--.-</span>
+          <span class="unit">°C</span>
+        </div>
+
+        <div class="maximum">
+          <span>Temperatura máxima registrada</span>
+          <strong id="maxTempPiscina">--.- °C</strong>
+        </div>
+      </section>
+
+      <!-- DETECÇÃO DE FOGO -->
+      <section class="fire-card" id="fireCard">
+        <div class="fire-icon" id="fireIcon">🔥</div>
+
+        <div class="fire-info">
+          <span class="fire-label"> DETECÇÃO DE FOGO </span>
+
+          <strong id="fireStatus"> SEM FOGO </strong>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="connection">
+        <span class="connection-dot"></span>
+        <span id="connectionStatus">ESP32 ONLINE</span>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
