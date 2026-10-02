@@ -9,25 +9,32 @@
 
 #define LED_PIN 2
 
-//Definição do pino pro sensor DS18B20
-#define ONE_WIRE_BUS 4
+#define ONE_WIRE_BUS 4 // Definição do pino pro sensor DS18B20
+
+#define FLAME_SENSOR_PIN 27 // Definição do pino para o sensor de chama
 
 //Define uma instancia do oneWire para comunicacao com o sensor
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 DeviceAddress sensorDS;
+WebServer server(80);
 
 const char *ssid = "AFFA_2.4G";
 const char *password = "Affa@2307";
 
-WebServer server(80);
-
 bool ledState = false;
 
-float tempSauna = 0.0;
+float tempSauna = 0.0; // Variável para armazenar a temperatura da sauna
+float flameLevel = 0.0; // Variável para armazenar o nível de chama
+
 
 // Declarar as funções antes de usá-las
 void postLedState();
+void getStatus();
+void handleRoot();
+void handleCSS();
+void handleJS();
+void readFlameSensor();
 
 // =============================
 // HTML
@@ -127,6 +134,29 @@ void postLedState()
   server.send(200, "application/json", json);
 }
 
+// ===========================================
+// FUNÇÃO PARA LEITURA DO SENSOR DE CHAMA   
+// ===========================================
+void readFlameSensor()
+{
+    int detections = 0;
+    const int totalReadings = 100;
+
+    for (int i = 0; i < totalReadings; i++)
+    {
+        int state = digitalRead(FLAME_SENSOR_PIN);
+
+        if (state == LOW)
+        {
+            detections++;
+        }
+
+        delay(10);
+    }
+
+    flameLevel = (detections * 100.0) / totalReadings;
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -186,12 +216,21 @@ void setup()
 
 void loop()
 {
-  server.handleClient();
-  
-  sensors.requestTemperatures();
+  // Leitura do sensor de chama
+  readFlameSensor();
 
+  // Processar requisições HTTP
+  server.handleClient();
+  // Leitura da temperatura da sauna
+  sensors.requestTemperatures();
   tempSauna = sensors.getTempCByIndex(0);
 
+  // Exibir o nível de chama no monitor serial
+  Serial.print("Nivel de chama: ");
+  Serial.print(flameLevel, 2);
+  Serial.println("%");
+
+  // Exibir a temperatura da sauna no monitor serial
   Serial.print("Temperatura da sauna: ");
   Serial.print(tempSauna);
   Serial.println(" °C");
