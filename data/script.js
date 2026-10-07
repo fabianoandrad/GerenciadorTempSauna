@@ -4,10 +4,32 @@ const tempSauna = document.getElementById("tempSauna")
 
 let ledState = false;
 
-function initTime(){
+function initTimes(){
     setInterval(() =>{
         getStatus();
-    }, 1000)
+        updateDateHour();
+    }, 1000);
+}
+
+// =============================
+//  DATE TIME 
+// =============================
+function updateDateHour() {
+    const now = new Date();
+
+    // Hora
+    const hour = now.toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+
+    // Data
+    const data = now.toLocaleDateString('pt-BR');
+
+    // Atualiza o HTML
+    document.getElementById('clock').textContent = hour;
+    document.getElementById('date').textContent = data;
 }
 
 // =============================
@@ -87,4 +109,4 @@ async function getStatus() {
 // =============================
 // INICIALIZAÇÃO
 // =============================
-initTime();
+initTimes();
