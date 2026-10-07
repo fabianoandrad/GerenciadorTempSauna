@@ -10,8 +10,8 @@
 #define LED_PIN 2
 
 #define ONE_WIRE_BUS 4 // Definição do pino pro sensor DS18B20
-
-#define FLAME_SENSOR_PIN 27 // Definição do pino para o sensor de chama
+#define FLAME_AO_PIN 34 // Definição do pino para o sensor de chama analógico
+#define FLAME_DO_PIN 27 // Definição do pino para o sensor de chama digital
 
 //Define uma instancia do oneWire para comunicacao com o sensor
 OneWire oneWire(ONE_WIRE_BUS);
@@ -26,6 +26,8 @@ bool ledState = false;
 
 float tempSauna = 0.0; // Variável para armazenar a temperatura da sauna
 float flameLevel = 0.0; // Variável para armazenar o nível de chama
+int flameRaw = 0;
+bool flameDetected = false;
 
 
 // Declarar as funções antes de usá-las
@@ -88,6 +90,24 @@ void handleJS()
 }
 
 // =============================
+// Favicon
+// =============================
+void handleFavicon()
+{
+    File file = LittleFS.open("/favicon.svg", "r");
+
+    if (!file)
+    {
+        server.send(404, "text/plain", "Favicon nao encontrado");
+        return;
+    }
+
+    server.streamFile(file, "image/svg+xml");
+
+    file.close();
+}
+
+// =============================
 // API STATUS
 // =============================
 void getStatus()
@@ -98,6 +118,10 @@ void getStatus()
   json += ledState ? "\"ligado\"," : "\"desligado\",";
   json += "\"tempSauna\":";
   json += String(tempSauna, 2);
+  json += "\"flameLevel\":";
+  json += String(flameLevel, 2);
+  json += "\"flameDetected\":";
+  json += flameDetected ? "\"true\"" : "\"false\"";
   json += "}";
 
   server.send(200, "application/json", json);
@@ -137,36 +161,58 @@ void postLedState()
 // ===========================================
 // FUNÇÃO PARA LEITURA DO SENSOR DE CHAMA   
 // ===========================================
-void readFlameSensor()
+float calculateFlameLevel(int raw)
 {
-    int detections = 0;
-    const int totalReadings = 100;
+    float level;
 
-    for (int i = 0; i < totalReadings; i++)
+    if (raw >= 3500)
     {
-        int state = digitalRead(FLAME_SENSOR_PIN);
-
-        if (state == LOW)
-        {
-            detections++;
-        }
-
-        delay(10);
+        level = 0.0;
+    }
+    else if (raw >= 2800)
+    {
+        level = 25.0 - ((raw - 2800) * 25.0 / (3500 - 2800));
+    }
+    else if (raw >= 1800)
+    {
+        level = 50.0 - ((raw - 1800) * 25.0 / (2800 - 1800));
+    }
+    else if (raw >= 900)
+    {
+        level = 100.0 - ((raw - 900) * 50.0 / (1800 - 900));
+    }
+    else
+    {
+        level = 100.0;
     }
 
-    flameLevel = (detections * 100.0) / totalReadings;
+    return level;
+}
+
+void readFlameSensor()
+{
+    flameRaw = analogRead(FLAME_AO_PIN);
+
+    flameLevel = calculateFlameLevel(flameRaw);
+
+    flameDetected = (digitalRead(FLAME_DO_PIN) == HIGH);
 }
 
 void setup()
 {
-  Serial.begin(115200);
-  sensors.begin();
+  Serial.begin(115200); // Inicializa a comunicação serial
+  sensors.begin(); // Inicializa a biblioteca DallasTemperature
+  
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(FLAME_AO_PIN, INPUT);
+  pinMode(FLAME_DO_PIN, INPUT);
+
+  analogReadResolution(12); // Configura a resolução da leitura analógica para 12 bits (0-4095)
+
   // Obtem endereço do sensor
   if (!sensors.getAddress(sensorDS, 0)) {
     Serial.println("Erro ao obter endereço do sensor!");
   }
-
-  pinMode(LED_PIN, OUTPUT);
 
   // LittleFS
   if (!LittleFS.begin(true))
@@ -208,6 +254,7 @@ void setup()
   // Rotas da API
   server.on("/api/status", HTTP_GET, getStatus);
   server.on("/api/ledState", HTTP_POST, postLedState);
+  server.on("/favicon.svg", HTTP_GET, handleFavicon);
 
   server.begin();
 
@@ -216,19 +263,25 @@ void setup()
 
 void loop()
 {
-  // Leitura do sensor de chama
-  readFlameSensor();
+  readFlameSensor(); // Leitura do sensor de chama
 
-  // Processar requisições HTTP
-  server.handleClient();
-  // Leitura da temperatura da sauna
-  sensors.requestTemperatures();
+  server.handleClient(); // Processar requisições HTTP  
+  sensors.requestTemperatures(); // Leitura da temperatura da sauna
   tempSauna = sensors.getTempCByIndex(0);
 
   // Exibir o nível de chama no monitor serial
-  Serial.print("Nivel de chama: ");
-  Serial.print(flameLevel, 2);
-  Serial.println("%");
+  Serial.print("RAW: ");
+  Serial.print(flameRaw);
+  Serial.print(" | Flame Level: ");
+  Serial.print(flameLevel, 2); // Exibir com duas casas decimais
+  Serial.print("% | Detectado: ");
+
+  if (flameDetected)
+      Serial.println("SIM");
+  else
+      Serial.println("NAO");
+
+  Serial.println("-----------------------------");
 
   // Exibir a temperatura da sauna no monitor serial
   Serial.print("Temperatura da sauna: ");
@@ -236,5 +289,4 @@ void loop()
   Serial.println(" °C");
 
   delay(1000);
-    
 }
