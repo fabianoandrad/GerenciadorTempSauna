@@ -1,6 +1,8 @@
 //const btnTeste = document.getElementById("btnTeste");
 //const mensagem = document.getElementById("mensagem");
-const tempSauna = document.getElementById("tempSauna")
+const tempSauna = document.getElementById("temp-Sauna");
+const percentageFire = document.getElementById("percentage-Fire");
+const fireCard = document.querySelector(".fire-card");
 
 let ledState = false;
 
@@ -51,7 +53,14 @@ async function getStatus() {
 
         //mensagem.textContent = `Status: ${data.status} | LED: ${data.led}`;
 
-        tempSauna.textContent = `${data.tempSauna}`
+        tempSauna.textContent = data.tempSauna;
+        percentageFire.textContent = `${data.flameLevel}%`;
+
+        if (data.flameDetected === "true") {
+            fireCard.classList.add("fire-detected");
+        }else if(!undefined){
+            fireCard.classList.remove("fire-detected");
+        }
     }
     catch (error) {
         console.error(error);

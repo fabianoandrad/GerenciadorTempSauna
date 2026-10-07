@@ -118,8 +118,10 @@ void getStatus()
   json += ledState ? "\"ligado\"," : "\"desligado\",";
   json += "\"tempSauna\":";
   json += String(tempSauna, 2);
+  json += ",";
   json += "\"flameLevel\":";
   json += String(flameLevel, 2);
+  json += ",";
   json += "\"flameDetected\":";
   json += flameDetected ? "\"true\"" : "\"false\"";
   json += "}";
