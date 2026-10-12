@@ -9,11 +9,12 @@
 
 #define LED_PIN 2
 
-#define ONE_WIRE_BUS 4 // Definição do pino pro sensor DS18B20
-#define FLAME_AO_PIN 34 // Definição do pino para o sensor de chama analógico
+#define ONE_WIRE_BUS 4  // Definição do pino pro sensor DS18B20
 #define FLAME_DO_PIN 27 // Definição do pino para o sensor de chama digital
+#define FLAME_AO_PIN 34 // Definição do pino para o sensor de chama analógico
+#define LM35_PIN 33     // Definição do pino para o sensor de temperatura LM35
 
-//Define uma instancia do oneWire para comunicacao com o sensor
+// Define uma instancia do oneWire para comunicacao com o sensor
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 DeviceAddress sensorDS;
@@ -22,13 +23,13 @@ WebServer server(80);
 const char *ssid = "AFFA_2.4G";
 const char *password = "Affa@2307";
 
+float tempSauna = 0.0;      // Variável para armazenar a temperatura da sauna
+float flameLevel = 0.0;     // Variável para armazenar o nível de chama
+float tempAmbiente = 0.0;   // Variável para armazenar a temperatura ambiente
+int flameRaw = 0;           // Variável para armazenar o valor bruto do sensor de chama
+int lm35Raw = 0;            // Variável para armazenar o valor bruto do sensor LM35
+bool flameDetected = false; // Variável para armazenar se a chama foi detectada
 bool ledState = false;
-
-float tempSauna = 0.0; // Variável para armazenar a temperatura da sauna
-float flameLevel = 0.0; // Variável para armazenar o nível de chama
-int flameRaw = 0;
-bool flameDetected = false;
-
 
 // Declarar as funções antes de usá-las
 void postLedState();
@@ -94,17 +95,17 @@ void handleJS()
 // =============================
 void handleFavicon()
 {
-    File file = LittleFS.open("/favicon.svg", "r");
+  File file = LittleFS.open("/favicon.svg", "r");
 
-    if (!file)
-    {
-        server.send(404, "text/plain", "Favicon nao encontrado");
-        return;
-    }
+  if (!file)
+  {
+    server.send(404, "text/plain", "Favicon nao encontrado");
+    return;
+  }
 
-    server.streamFile(file, "image/svg+xml");
+  server.streamFile(file, "image/svg+xml");
 
-    file.close();
+  file.close();
 }
 
 // =============================
@@ -161,58 +162,70 @@ void postLedState()
 }
 
 // ===========================================
-// FUNÇÃO PARA LEITURA DO SENSOR DE CHAMA   
+// FUNÇÃO PARA LEITURA DO SENSOR DE CHAMA
 // ===========================================
 float calculateFlameLevel(int raw)
 {
-    float level;
+  float level;
 
-    if (raw >= 3500)
-    {
-        level = 0.0;
-    }
-    else if (raw >= 2800)
-    {
-        level = 25.0 - ((raw - 2800) * 25.0 / (3500 - 2800));
-    }
-    else if (raw >= 1800)
-    {
-        level = 50.0 - ((raw - 1800) * 25.0 / (2800 - 1800));
-    }
-    else if (raw >= 900)
-    {
-        level = 100.0 - ((raw - 900) * 50.0 / (1800 - 900));
-    }
-    else
-    {
-        level = 100.0;
-    }
+  if (raw >= 3500)
+  {
+    level = 0.0;
+  }
+  else if (raw >= 2800)
+  {
+    level = 25.0 - ((raw - 2800) * 25.0 / (3500 - 2800));
+  }
+  else if (raw >= 1800)
+  {
+    level = 50.0 - ((raw - 1800) * 25.0 / (2800 - 1800));
+  }
+  else if (raw >= 900)
+  {
+    level = 100.0 - ((raw - 900) * 50.0 / (1800 - 900));
+  }
+  else
+  {
+    level = 100.0;
+  }
 
-    return level;
+  return level;
 }
 
 void readFlameSensor()
 {
-    flameRaw = analogRead(FLAME_AO_PIN);
+  flameRaw = analogRead(FLAME_AO_PIN);
 
-    flameLevel = calculateFlameLevel(flameRaw);
+  flameLevel = calculateFlameLevel(flameRaw);
 
-    flameDetected = (digitalRead(FLAME_DO_PIN) == HIGH);
+  flameDetected = (digitalRead(FLAME_DO_PIN) == HIGH);
+}
+
+void readTemperatureAmbient()
+{
+  lm35Raw = analogRead(LM35_PIN);
+
+  float voltage = (lm35Raw / 4095.0) * 3.3; // Converte o valor bruto para tensão (0-3.3V)
+
+  tempAmbiente = voltage * 100.0;
 }
 
 void setup()
 {
   Serial.begin(115200); // Inicializa a comunicação serial
-  sensors.begin(); // Inicializa a biblioteca DallasTemperature
-  
+  sensors.begin();      // Inicializa a biblioteca DallasTemperature
+
+  // Configura os pinos
   pinMode(LED_PIN, OUTPUT);
   pinMode(FLAME_AO_PIN, INPUT);
   pinMode(FLAME_DO_PIN, INPUT);
+  pinMode(LM35_PIN, INPUT);
 
   analogReadResolution(12); // Configura a resolução da leitura analógica para 12 bits (0-4095)
-
+analogSetPinAttenuation(LM35_PIN, ADC_11db);
   // Obtem endereço do sensor
-  if (!sensors.getAddress(sensorDS, 0)) {
+  if (!sensors.getAddress(sensorDS, 0))
+  {
     Serial.println("Erro ao obter endereço do sensor!");
   }
 
@@ -224,17 +237,27 @@ void setup()
   }
 
   // Wi-Fi
+  WiFi.begin(ssid, password);
+  
   Serial.println();
   Serial.print("Conectando ao Wi-Fi");
 
-  WiFi.begin(ssid, password);
+ unsigned long startAttempt = millis();
 
-  while (WiFi.status() != WL_CONNECTED)
+  while (WiFi.status() != WL_CONNECTED &&
+        millis() - startAttempt < 15000)
   {
-    Serial.println("Erro de conexação com wifi");
-    //float Sensor_DS18B20 = sensors.getTempC(sensorDS);
-    delay(500);
-    //Serial.print("Temp: "); Serial.print(Sensor_DS18B20); Serial.print("°C");
+      Serial.print(".");
+      delay(500);
+  }
+
+  if (WiFi.status() != WL_CONNECTED)
+  {
+      Serial.println("\nFalha ao conectar ao Wi-Fi");
+  }
+  else
+  {
+      Serial.println("\nWi-Fi conectado!");
   }
 
   // while(true){
@@ -258,6 +281,15 @@ void setup()
   server.on("/api/ledState", HTTP_POST, postLedState);
   server.on("/favicon.svg", HTTP_GET, handleFavicon);
 
+  server.onNotFound([]()
+  {
+      server.send(
+          404,
+          "application/json",
+          "{\"erro\":\"rota nao encontrada\"}"
+      );
+  });
+
   server.begin();
 
   Serial.println("Servidor HTTP iniciado!");
@@ -266,12 +298,40 @@ void setup()
 void loop()
 {
   readFlameSensor(); // Leitura do sensor de chama
+  readTemperatureAmbient(); // Leitura do sensor de temperatura ambiente
 
-  server.handleClient(); // Processar requisições HTTP  
-  sensors.requestTemperatures(); // Leitura da temperatura da sauna
-  tempSauna = sensors.getTempCByIndex(0);
+  server.handleClient(); // Processar requisições HTTP
 
+  static unsigned long lastTemp = 0;
+
+  if (millis() - lastTemp > 2000)
+  {
+      lastTemp = millis();
+
+      sensors.requestTemperatures(); // Leitura da temperatura da sauna
+
+      float temp = sensors.getTempCByIndex(0);
+
+      if (temp != DEVICE_DISCONNECTED_C)
+      {
+          tempSauna = temp;
+      }
+  }
+
+  // =================================
+  // Leitura da temperatura ambiente
+  // =================================
+  Serial.print("Flame RAW: ");
+  Serial.print(flameRaw);
+  Serial.print(" | Flame Level: ");
+  Serial.print(flameLevel, 2);
+  Serial.print("% | Temp Ambiente: ");
+  Serial.print(tempAmbiente, 2);
+  Serial.println(" °C");
+
+  // ===========================================
   // Exibir o nível de chama no monitor serial
+  // ===========================================
   Serial.print("RAW: ");
   Serial.print(flameRaw);
   Serial.print(" | Flame Level: ");
@@ -279,13 +339,15 @@ void loop()
   Serial.print("% | Detectado: ");
 
   if (flameDetected)
-      Serial.println("SIM");
+    Serial.println("SIM");
   else
-      Serial.println("NAO");
+    Serial.println("NAO");
 
   Serial.println("-----------------------------");
 
+  // =================================================
   // Exibir a temperatura da sauna no monitor serial
+  // =================================================
   Serial.print("Temperatura da sauna: ");
   Serial.print(tempSauna);
   Serial.println(" °C");
