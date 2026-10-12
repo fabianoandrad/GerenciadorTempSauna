@@ -14,15 +14,28 @@
 #define FLAME_AO_PIN 34 // Definição do pino para o sensor de chama analógico
 #define LM35_PIN 33     // Definição do pino para o sensor de temperatura LM35
 
+// =============================
+// Sensores
 // Define uma instancia do oneWire para comunicacao com o sensor
+// =============================
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 DeviceAddress sensorDS;
+
+// =============================
+// WebServer
+// =============================
 WebServer server(80);
 
+// =============================
+// WiFi
+// =============================
 const char *ssid = "AFFA_2.4G";
 const char *password = "Affa@2307";
 
+// =============================
+// Variáveis globais
+// =============================
 float tempSauna = 0.0;      // Variável para armazenar a temperatura da sauna
 float flameLevel = 0.0;     // Variável para armazenar o nível de chama
 float tempAmbiente = 0.0;   // Variável para armazenar a temperatura ambiente
@@ -41,6 +54,7 @@ void readFlameSensor();
 
 // =============================
 // HTML
+// Arquivos estáticos
 // =============================
 void handleRoot()
 {
