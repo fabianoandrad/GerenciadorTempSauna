@@ -1,17 +1,26 @@
 //const btnTeste = document.getElementById("btnTeste");
 //const mensagem = document.getElementById("mensagem");
 const tempSauna = document.getElementById("temp-Sauna");
-const percentageFire = document.getElementById("percentage-Fire");
+const tempPiscina = document.getElementById("temp-Piscina");
+const tempRoom = document.getElementById("temp-Room");
+const humidity = document.getElementById("humidity");
 const fireCard = document.querySelector(".fire-card");
+const percentageFire = document.getElementById("percentage-Fire");
+const connectionStatus = document.getElementById("connectionStatus");
 
 let ledState = false;
 
 function initTimes(){
+
+    getStatus();
+    updateDateHour();
+
     setInterval(() =>{
         getStatus();
         updateDateHour();
     }, 1000);
 }
+
 
 // =============================
 //  DATE TIME 
@@ -53,18 +62,31 @@ async function getStatus() {
 
         //mensagem.textContent = `Status: ${data.status} | LED: ${data.led}`;
 
-        tempSauna.textContent = data.tempSauna;
+        tempSauna.textContent = Number(data.tempSauna).toFixed(1);
+        //tempPiscina.textContent = Number(data.tempPiscina).toFixed(1);
+        tempRoom.textContent = Number(data.tempRoom).toFixed(1);
+        humidity.textContent = Number(data.humidity).toFixed(1);
         percentageFire.textContent = `${data.flameLevel}%`;
+
+        if(data.status === "online"){
+            connectionStatus.textContent = "ONLINE";
+            
+        }else{
+            connectionStatus.classList.add("disconnected")
+            connectionStatus.textContent = "DESCONECTADO";
+        }
+
 
         if (data.flameDetected === "true") {
             fireCard.classList.add("fire-detected");
-        }else if(!undefined){
+        }else{
             fireCard.classList.remove("fire-detected");
         }
     }
     catch (error) {
         console.error(error);
-        //mensagem.textContent = "Erro ao conectar com o ESP32";
+        connectionStatus.classList.add("disconnected")
+        connectionStatus.textContent = "DESCONECTADO";
     }
 }
 

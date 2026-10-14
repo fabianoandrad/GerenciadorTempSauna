@@ -175,7 +175,9 @@ body {
 }
 
 .temperature #temp-Sauna,
-.temperature #tempPiscina {
+.temperature #temp-Piscina,
+.temperature #temp-Room,
+.temperature #humidity {
     font-size: clamp(44px, 9vw, 80px);
 
     font-weight: 700;
@@ -361,6 +363,10 @@ body {
     background: #4ade80;
 
     box-shadow: 0 0 10px rgba(74, 222, 128, 0.7);
+}
+
+.connection.connection-dot.disconnected {
+    background: rgb(241, 37, 37);
 }
 
 

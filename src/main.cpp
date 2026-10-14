@@ -3,16 +3,18 @@
 #include <WebServer.h>
 #include <LittleFS.h>
 #include <ArduinoJson.h>
+#include <DHT.h>
 
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
-#define LED_PIN 2
-
+#define LED_PIN 2       // Definição do pino para o LED do proprio ESP32
 #define ONE_WIRE_BUS 4  // Definição do pino pro sensor DS18B20
 #define FLAME_DO_PIN 27 // Definição do pino para o sensor de chama digital
 #define FLAME_AO_PIN 34 // Definição do pino para o sensor de chama analógico
-#define LM35_PIN 33     // Definição do pino para o sensor de temperatura LM35
+#define DHT_PIN 33      // Definição do pino para o sensor DHT22
+
+#define DHT_TYPE DHT22 // Definição do tipo do sensor DHT22
 
 // =============================
 // Sensores
@@ -21,6 +23,7 @@
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 DeviceAddress sensorDS;
+DHT dht(DHT_PIN, DHT_TYPE);
 
 // =============================
 // WebServer
@@ -36,12 +39,12 @@ const char *password = "Affa@2307";
 // =============================
 // Variáveis globais
 // =============================
-float tempSauna = 0.0;      // Variável para armazenar a temperatura da sauna
-float flameLevel = 0.0;     // Variável para armazenar o nível de chama
-float tempAmbiente = 0.0;   // Variável para armazenar a temperatura ambiente
-int flameRaw = 0;           // Variável para armazenar o valor bruto do sensor de chama
-int lm35Raw = 0;            // Variável para armazenar o valor bruto do sensor LM35
-bool flameDetected = false; // Variável para armazenar se a chama foi detectada
+float tempSauna = 0.0;       // Variável para armazenar a temperatura da sauna
+float flameLevel = 0.0;      // Variável para armazenar o nível de chama
+float tempAmbiente = 0.0;    // Variável para armazenar a temperatura ambiente
+float umidadeAmbiente = 0.0; // Variável para armazenar a umidade ambiente
+int flameRaw = 0;            // Variável para armazenar o valor bruto do sensor de chama
+bool flameDetected = false;  // Variável para armazenar se a chama foi detectada
 bool ledState = false;
 
 // Declarar as funções antes de usá-las
@@ -139,6 +142,12 @@ void getStatus()
   json += ",";
   json += "\"flameDetected\":";
   json += flameDetected ? "\"true\"" : "\"false\"";
+  json += ",";
+  json += "\"tempRoom\":";
+  json += String(tempAmbiente, 1);
+  json += ",";
+  json += "\"humidity\":";
+  json += String(umidadeAmbiente, 1);
   json += "}";
 
   server.send(200, "application/json", json);
@@ -217,26 +226,33 @@ void readFlameSensor()
 
 void readTemperatureAmbient()
 {
-  lm35Raw = analogRead(LM35_PIN);
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
 
-  float voltage = (lm35Raw / 4095.0) * 3.3; // Converte o valor bruto para tensão (0-3.3V)
+  if (!isnan(temperature))
+  {
+    tempAmbiente = temperature;
+  }
 
-  tempAmbiente = voltage * 100.0;
+  if (!isnan(humidity))
+  {
+    umidadeAmbiente = humidity;
+  }
 }
 
 void setup()
 {
   Serial.begin(115200); // Inicializa a comunicação serial
   sensors.begin();      // Inicializa a biblioteca DallasTemperature
+  dht.begin();
 
   // Configura os pinos
   pinMode(LED_PIN, OUTPUT);
   pinMode(FLAME_AO_PIN, INPUT);
   pinMode(FLAME_DO_PIN, INPUT);
-  pinMode(LM35_PIN, INPUT);
 
   analogReadResolution(12); // Configura a resolução da leitura analógica para 12 bits (0-4095)
-analogSetPinAttenuation(LM35_PIN, ADC_11db);
+
   // Obtem endereço do sensor
   if (!sensors.getAddress(sensorDS, 0))
   {
@@ -252,26 +268,26 @@ analogSetPinAttenuation(LM35_PIN, ADC_11db);
 
   // Wi-Fi
   WiFi.begin(ssid, password);
-  
+
   Serial.println();
   Serial.print("Conectando ao Wi-Fi");
 
- unsigned long startAttempt = millis();
+  unsigned long startAttempt = millis();
 
   while (WiFi.status() != WL_CONNECTED &&
-        millis() - startAttempt < 15000)
+         millis() - startAttempt < 15000)
   {
-      Serial.print(".");
-      delay(500);
+    Serial.print(".");
+    delay(500);
   }
 
   if (WiFi.status() != WL_CONNECTED)
   {
-      Serial.println("\nFalha ao conectar ao Wi-Fi");
+    Serial.println("\nFalha ao conectar ao Wi-Fi");
   }
   else
   {
-      Serial.println("\nWi-Fi conectado!");
+    Serial.println("\nWi-Fi conectado!");
   }
 
   // while(true){
@@ -296,13 +312,10 @@ analogSetPinAttenuation(LM35_PIN, ADC_11db);
   server.on("/favicon.svg", HTTP_GET, handleFavicon);
 
   server.onNotFound([]()
-  {
-      server.send(
-          404,
-          "application/json",
-          "{\"erro\":\"rota nao encontrada\"}"
-      );
-  });
+                    { server.send(
+                          404,
+                          "application/json",
+                          "{\"erro\":\"rota nao encontrada\"}"); });
 
   server.begin();
 
@@ -311,7 +324,7 @@ analogSetPinAttenuation(LM35_PIN, ADC_11db);
 
 void loop()
 {
-  readFlameSensor(); // Leitura do sensor de chama
+  readFlameSensor();        // Leitura do sensor de chama
   readTemperatureAmbient(); // Leitura do sensor de temperatura ambiente
 
   server.handleClient(); // Processar requisições HTTP
@@ -320,28 +333,33 @@ void loop()
 
   if (millis() - lastTemp > 2000)
   {
-      lastTemp = millis();
+    lastTemp = millis();
 
-      sensors.requestTemperatures(); // Leitura da temperatura da sauna
+    sensors.requestTemperatures(); // Leitura da temperatura da sauna
 
-      float temp = sensors.getTempCByIndex(0);
+    float temp = sensors.getTempCByIndex(0);
 
-      if (temp != DEVICE_DISCONNECTED_C)
-      {
-          tempSauna = temp;
-      }
+    if (temp != DEVICE_DISCONNECTED_C)
+    {
+      tempSauna = temp;
+    }
   }
 
+  // =================================================
+  // Exibir a temperatura da sauna no monitor serial
+  // =================================================
+  Serial.print("Temperatura da sauna: ");
+  Serial.print(tempSauna);
+  Serial.println(" °C");
+  
   // =================================
   // Leitura da temperatura ambiente
   // =================================
-  Serial.print("Flame RAW: ");
-  Serial.print(flameRaw);
-  Serial.print(" | Flame Level: ");
-  Serial.print(flameLevel, 2);
-  Serial.print("% | Temp Ambiente: ");
-  Serial.print(tempAmbiente, 2);
-  Serial.println(" °C");
+  Serial.print("Temp Ambiente: ");
+  Serial.print(tempAmbiente, 1);
+  Serial.print(" °C | Umidade: ");
+  Serial.print(umidadeAmbiente, 1);
+  Serial.println(" %");
 
   // ===========================================
   // Exibir o nível de chama no monitor serial
@@ -357,14 +375,7 @@ void loop()
   else
     Serial.println("NAO");
 
+
   Serial.println("-----------------------------");
-
-  // =================================================
-  // Exibir a temperatura da sauna no monitor serial
-  // =================================================
-  Serial.print("Temperatura da sauna: ");
-  Serial.print(tempSauna);
-  Serial.println(" °C");
-
   delay(1000);
 }
