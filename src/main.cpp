@@ -130,25 +130,18 @@ void handleFavicon()
 // =============================
 void getStatus()
 {
-  String json = "{";
-  json += "\"status\":\"online\",";
-  json += "\"led\":";
-  json += ledState ? "\"ligado\"," : "\"desligado\",";
-  json += "\"tempSauna\":";
-  json += String(tempSauna, 2);
-  json += ",";
-  json += "\"flameLevel\":";
-  json += String(flameLevel, 2);
-  json += ",";
-  json += "\"flameDetected\":";
-  json += flameDetected ? "\"true\"" : "\"false\"";
-  json += ",";
-  json += "\"tempRoom\":";
-  json += String(tempAmbiente, 1);
-  json += ",";
-  json += "\"humidity\":";
-  json += String(umidadeAmbiente, 1);
-  json += "}";
+    JsonDocument doc;
+
+    doc["status"] = "online";
+    doc["led"] = ledState ? "ligado" : "desligado";
+    doc["tempSauna"] = tempSauna;
+    doc["flameLevel"] = flameLevel;
+    doc["flameDetected"] = flameDetected;
+    doc["tempRoom"] = tempAmbiente;
+    doc["humidity"] = umidadeAmbiente;
+
+    String json;
+    serializeJson(doc, json);
 
   server.send(200, "application/json", json);
 }

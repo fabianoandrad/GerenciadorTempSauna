@@ -77,7 +77,7 @@ async function getStatus() {
         }
 
 
-        if (data.flameDetected === "true") {
+        if (data.flameDetected) {
             fireCard.classList.add("fire-detected");
         }else{
             fireCard.classList.remove("fire-detected");
