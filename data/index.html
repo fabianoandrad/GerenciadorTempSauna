@@ -25,10 +25,10 @@
 
     <main class="dashboard">
       <!-- SAUNA -->
-      <section class="temperature-card sauna">
+      <section class="card">
         <div class="card-header">
           <span class="icon">♨️</span>
-          <h2>SAUNA</h2>
+          <span class="title-cards">SAUNA</span>
         </div>
 
         <div class="temperature">
@@ -37,16 +37,23 @@
         </div>
 
         <div class="maximum">
-          <span>Temperatura máxima registrada</span>
-          <strong id="maxTempSauna">--.- °C</strong>
+          <div>
+            <span>Mínima e Máxima</span>
+          </div>
+          <div class="tempMinMax">
+            <img class="arrows" src="icons/seta-down.svg" alt="">
+            <strong id="minTempSauna">--.- °C</strong>
+            <img class="arrows" src="icons/seta-up.svg" alt="">
+            <strong id="maxTempSauna">--.- °C</strong>
+          </div>
         </div>
       </section>
 
       <!-- PISCINA -->
-      <section class="temperature-card piscina">
+      <section class="card">
         <div class="card-header">
           <span class="icon">💧</span>
-          <h2>PISCINA</h2>
+          <span class="title-cards">PISCINA</span>
         </div>
 
         <div class="temperature">
@@ -61,10 +68,10 @@
       </section>
 
       <!-- TEMPERATURA AMBIENTE -->
-      <section class="temperature-card room">
+      <section class="card">
         <div class="card-header">
           <span class="icon">🌡️</span>
-          <h2>TEMP. AMBIENTE</h2>
+          <span class="title-cards">TEMP. AMBIENTE</span>
         </div>
 
         <div class="temperature">
@@ -79,10 +86,10 @@
       </section>
 
       <!-- HUMIDADE -->
-      <section class="temperature-card humidity">
+      <section class="card">
         <div class="card-header">
           <span class="icon">💦</span>
-          <h2>HUMIDADE</h2>
+          <span class="title-cards">HUMIDADE</span>
         </div>
 
         <div class="temperature">
@@ -92,12 +99,12 @@
 
         <div class="maximum">
           <span>Umidade máxima registrada</span>
-          <strong id="maxHumidity">--.- %</strong>
+          <strong id="maxHumidityRoom">--.- %</strong>
         </div>
       </section>
 
       <!-- DETECÇÃO DE FOGO -->
-      <section class="fire-card" id="fireCard">
+      <section class="card" id="fire-card">
         <div class="fire-icon" id="fireIcon">🔥</div>
 
         <div class="fire-info">

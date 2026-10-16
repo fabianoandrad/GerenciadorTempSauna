@@ -1,10 +1,23 @@
 //const btnTeste = document.getElementById("btnTeste");
 //const mensagem = document.getElementById("mensagem");
+
 const tempSauna = document.getElementById("temp-Sauna");
-const tempPiscina = document.getElementById("temp-Piscina");
+const maxTempSauna = document.getElementById("maxTempSauna")
+const minTempSauna = document.getElementById("minTempSauna")
+
+const tempPool = document.getElementById("temp-Piscina");
+const maxTempPool = document.getElementById("maxTempPiscina");
+//const minTempPool = document.getElementById("minTempPiscina");
+
 const tempRoom = document.getElementById("temp-Room");
-const humidity = document.getElementById("humidity");
-const fireCard = document.querySelector(".fire-card");
+const maxTempRoom = document.getElementById("maxTempRoom");
+//const minTempRoom = document.getElementById("minTempRoom");
+
+const humidityRoom = document.getElementById("humidity");
+const maxHumidityRoom = document.getElementById("maxHumidityRoom");
+//const minHumidityRoom = document.getElementById("minHumidityRoom");
+
+const fireCard = document.getElementById("fire-card");
 const percentageFire = document.getElementById("percentage-Fire");
 const connectionStatus = document.getElementById("connectionStatus");
 
@@ -51,6 +64,9 @@ async function getStatus() {
         const response = await fetch("/api/status");
 
         if (!response.ok) {
+            connectionStatus.classList.add("disconnected");
+            connectionStatus.textContent = "DESCONECTADO";
+
             throw new Error("Erro HTTP: " + response.status);
         }
 
@@ -63,10 +79,22 @@ async function getStatus() {
         //mensagem.textContent = `Status: ${data.status} | LED: ${data.led}`;
 
         tempSauna.textContent = Number(data.tempSauna).toFixed(1);
-        //tempPiscina.textContent = Number(data.tempPiscina).toFixed(1);
+        maxTempSauna.textContent = Number(data.maxTempSauna).toFixed(1);
+        minTempSauna.textContent = Number(data.minTempSauna).toFixed(1);
+
+        tempPool.textContent = Number(data.tempPool).toFixed(1);
+        maxTempPool.textContent = Number(data.maxTempPool).toFixed(1);
+        //minTempPool.textContent = Number(data.minTempPool).toFixed(1);
+
         tempRoom.textContent = Number(data.tempRoom).toFixed(1);
-        humidity.textContent = Number(data.humidity).toFixed(1);
-        percentageFire.textContent = `${data.flameLevel}%`;
+        maxTempRoom.textContent = Number(data.maxTempRoom).toFixed(1);
+        //minTempRoom.textContent = Number(data.minTempRoom).toFixed(1);
+
+        humidityRoom.textContent = Number(data.humidityRoom).toFixed(1);
+        maxHumidityRoom.textContent = Number(data.maxHumidityRoom).toFixed(1);
+        //minHumidityRoom.textContent = Number(data.minHumidityRoom).toFixed(1);
+
+        percentageFire.textContent = `${Number(data.flameLevel).toFixed(1)}%`;
 
         if(data.status === "online"){
             connectionStatus.textContent = "ONLINE";
@@ -76,17 +104,16 @@ async function getStatus() {
             connectionStatus.textContent = "DESCONECTADO";
         }
 
-
         if (data.flameDetected) {
             fireCard.classList.add("fire-detected");
+
         }else{
             fireCard.classList.remove("fire-detected");
         }
     }
     catch (error) {
         console.error(error);
-        connectionStatus.classList.add("disconnected")
-        connectionStatus.textContent = "DESCONECTADO";
+        
     }
 }
 

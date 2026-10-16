@@ -4,7 +4,7 @@
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 #include <DHT.h>
-
+#include <Preferences.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
@@ -15,6 +15,7 @@
 #define DHT_PIN 33      // Definição do pino para o sensor DHT22
 
 #define DHT_TYPE DHT22 // Definição do tipo do sensor DHT22
+
 
 // =============================
 // Sensores
@@ -31,6 +32,11 @@ DHT dht(DHT_PIN, DHT_TYPE);
 WebServer server(80);
 
 // =============================
+// LocalStorage do esp32
+// =============================
+Preferences preferences;
+
+// =============================
 // WiFi
 // =============================
 const char *ssid = "AFFA_2.4G";
@@ -39,13 +45,23 @@ const char *password = "Affa@2307";
 // =============================
 // Variáveis globais
 // =============================
-float tempSauna = 0.0;       // Variável para armazenar a temperatura da sauna
-float flameLevel = 0.0;      // Variável para armazenar o nível de chama
-float tempAmbiente = 0.0;    // Variável para armazenar a temperatura ambiente
-float umidadeAmbiente = 0.0; // Variável para armazenar a umidade ambiente
-int flameRaw = 0;            // Variável para armazenar o valor bruto do sensor de chama
-bool flameDetected = false;  // Variável para armazenar se a chama foi detectada
 bool ledState = false;
+float tempSauna = 0.0; // Variável para armazenar a temperatura da sauna
+float tempPool = 0.0; // Variavel para armazenar a temperatura da piscina
+float flameLevel = 0.0; // Variável para armazenar o nível de chama
+float tempRoom = 0.0; // Variável para armazenar a temperatura ambiente
+float humidityRoom = 0.0; // Variável para armazenar a umidade ambiente
+int flameRaw = 0; // Variável para armazenar o valor bruto do sensor de chama
+bool flameDetected = false; // Variável para armazenar se a chama foi detectada
+
+float maxTempSauna = 0; 
+float minTempSauna = 0;
+float maxTempPool = 0;
+float minTempPool = 0;
+float maxTempRoom = 0;
+float minTempRoom = 0;
+float maxHumidityRoom = 0;
+float minHumidityRoom = 0;
 
 // Declarar as funções antes de usá-las
 void postLedState();
@@ -135,10 +151,19 @@ void getStatus()
     doc["status"] = "online";
     doc["led"] = ledState ? "ligado" : "desligado";
     doc["tempSauna"] = tempSauna;
+    doc["maxTempSauna"] = maxTempSauna;
+    doc["minTempSauna"] = minTempSauna;
+    doc["tempPool"] = tempPool;
+    doc["maxTempPool"] = maxTempPool;
+    doc["minTempPool"] = minTempPool;
+    doc["tempRoom"] = tempRoom;
+    doc["maxTempRoom"] = maxTempRoom;
+    doc["minTempRoom"] = minTempRoom;
+    doc["humidityRoom"] = humidityRoom;
+    doc["maxHumidityRoom"] = maxHumidityRoom;
+    doc["minHumidityRoom"] = minHumidityRoom;
     doc["flameLevel"] = flameLevel;
     doc["flameDetected"] = flameDetected;
-    doc["tempRoom"] = tempAmbiente;
-    doc["humidity"] = umidadeAmbiente;
 
     String json;
     serializeJson(doc, json);
@@ -224,12 +249,12 @@ void readTemperatureAmbient()
 
   if (!isnan(temperature))
   {
-    tempAmbiente = temperature;
+    tempRoom = temperature;
   }
 
   if (!isnan(humidity))
   {
-    umidadeAmbiente = humidity;
+    humidityRoom = humidity;
   }
 }
 
@@ -238,6 +263,16 @@ void setup()
   Serial.begin(115200); // Inicializa a comunicação serial
   sensors.begin();      // Inicializa a biblioteca DallasTemperature
   dht.begin();
+  preferences.begin("sauna-data", false);
+
+  maxTempSauna = preferences.getFloat("maxTempSaunaNVS", 0); 
+  minTempSauna = preferences.getFloat("minTempSaunaNVS", 0); 
+  maxTempPool = preferences.getFloat("maxTempPoolNVS", 0);
+  minTempPool = preferences.getFloat("minTempPoolNVS", 0);
+  maxTempRoom = preferences.getFloat("maxTempRoomNVS", 0);
+  minTempRoom = preferences.getFloat("minTemRoomNVS", 0);
+  maxHumidityRoom = preferences.getFloat("maxHumidityRoomNVS", 0);
+  minHumidityRoom = preferences.getFloat("minHumidityRoomNVS", 0);
 
   // Configura os pinos
   pinMode(LED_PIN, OUTPUT);
@@ -339,6 +374,53 @@ void loop()
   }
 
   // =================================================
+  // Armazenamos na NVS do esp32 os dados
+  // =================================================
+  if(tempSauna > maxTempSauna)
+  {
+    maxTempSauna = tempSauna;
+    preferences.putFloat("maxTempSaunaNVS", maxTempSauna);
+  }
+  if(tempSauna < minTempSauna || minTempSauna == 0.00)
+  {
+    minTempSauna = tempSauna;
+    preferences.putFloat("minTempSaunaNVS", minTempSauna);
+  }
+
+  if(tempPool > maxTempPool)
+  {
+    maxTempPool = tempPool;
+    preferences.putFloat("maxTempPoolNVS", maxTempPool);
+  }
+  if(tempPool < minTempPool || minTempPool == 0.00)
+  {
+    minTempPool = tempPool;
+    preferences.putFloat("minTempPoolNVS", minTempPool);
+  }
+
+  if(tempRoom > maxTempRoom)
+  {
+    maxTempRoom = tempRoom;
+    preferences.putFloat("maxTempRoomNVS", maxTempRoom);
+  }
+  if(tempRoom < minTempRoom || minTempRoom == 0.00)
+  {
+    minTempRoom = tempRoom;
+    preferences.putFloat("minTempRoomNVS", minTempRoom);
+  }
+
+  if(humidityRoom > maxHumidityRoom)
+  {
+    maxHumidityRoom = humidityRoom;
+    preferences.putFloat("maxHumidityRoomNVS", maxHumidityRoom);
+  }
+  if(humidityRoom < minHumidityRoom || minHumidityRoom == 0.00)
+  {
+    minHumidityRoom = humidityRoom;
+    preferences.putFloat("minHumidityRoomNVS", minHumidityRoom);
+  }
+
+  // =================================================
   // Exibir a temperatura da sauna no monitor serial
   // =================================================
   Serial.print("Temperatura da sauna: ");
@@ -349,9 +431,9 @@ void loop()
   // Leitura da temperatura ambiente
   // =================================
   Serial.print("Temp Ambiente: ");
-  Serial.print(tempAmbiente, 1);
+  Serial.print(tempRoom, 1);
   Serial.print(" °C | Umidade: ");
-  Serial.print(umidadeAmbiente, 1);
+  Serial.print(humidityRoom, 1);
   Serial.println(" %");
 
   // ===========================================
